@@ -49,6 +49,13 @@ jobs:
           }
           collect NickMarcha/bragi bragi-v
           collect NickMarcha/deskflow headless-v
+          # Debian's file names (name_version_arch.deb): the index only
+          # takes files named for the architecture, and release assets
+          # aren't always (the Deskflow build says "aarch64").
+          for deb in site/pool/main/*.deb; do
+            name="$(dpkg-deb -f "$deb" Package)_$(dpkg-deb -f "$deb" Version)_$(dpkg-deb -f "$deb" Architecture).deb"
+            [ "$(basename "$deb")" = "$name" ] || mv -f "$deb" "site/pool/main/$name"
+          done
           ls -la site/pool/main
 
       - name: Index

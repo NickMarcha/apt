@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bragi apt repository</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; }
+    pre { background: color-mix(in srgb, currentColor 8%, transparent); padding: .75rem 1rem; overflow-x: auto; border-radius: 6px; }
+    code { font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <h1>Bragi apt repository</h1>
+  <p>Packages for <a href="https://github.com/NickMarcha/bragi">Bragi</a> and the
+     <a href="https://github.com/NickMarcha/deskflow/tree/headless">headless Deskflow server</a>,
+     for Raspberry Pi OS / Debian trixie on arm64.</p>
+
+  <h2>Install</h2>
+  <pre><code>curl -fsSL https://nickmarcha.github.io/apt/install.sh | sh</code></pre>
+  <p>Or by hand:</p>
+  <pre><code>curl -fsSL https://nickmarcha.github.io/apt/bragi-archive-keyring.gpg | sudo tee /usr/share/keyrings/bragi-archive-keyring.gpg &gt;/dev/null
+sudo tee /etc/apt/sources.list.d/bragi.sources &gt;/dev/null &lt;&lt;EOF
+Types: deb
+URIs: https://nickmarcha.github.io/apt
+Suites: trixie
+Components: main
+Signed-By: /usr/share/keyrings/bragi-archive-keyring.gpg
+EOF
+sudo apt update &amp;&amp; sudo apt install bragi</code></pre>
+
+  <h2>Update</h2>
+  <pre><code>sudo apt update &amp;&amp; sudo apt upgrade</code></pre>
+  <p>Bragi's dashboard can do this too.</p>
+
+  <h2>Signing key</h2>
+  <p>Fingerprint <code>753F 00FA D4D7 15C2 CB5B  6FFD EE31 EA61 CD9C F9A5</code>
+     (<a href="bragi-archive-keyring.asc">ASCII</a>).</p>
+</body>
+</html>

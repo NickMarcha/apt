@@ -1,0 +1,105 @@
+name: Publish
+
+# Builds the apt repository from the newest releases of Bragi and the
+# headless Deskflow server, signs it and publishes it on GitHub Pages
+# (https://nickmarcha.github.io/apt/). Runs hourly, so a new release shows
+# up within the hour, or by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [publish]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  SUITE: trixie
+  # Releases kept per package: the newest plus older ones to roll back to.
+  KEEP: 3
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: sudo apt-get install -y -qq --no-install-recommends apt-utils gnupg dpkg-dev >/dev/null
+
+      - name: Collect packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p site/pool/main
+          collect() {  # repo, tag prefix
+            gh release list -R "$1" --limit 50 --json tagName,isDraft,isPrerelease \
+              --jq ".[] | select(.isDraft == false and .isPrerelease == false and (.tagName | startswith(\"$2\"))) | .tagName" \
+              | head -n "$KEEP" | while read -r tag; do
+                gh release download "$tag" -R "$1" -p '*.deb' -D site/pool/main --skip-existing
+              done
+          }
+          collect NickMarcha/bragi bragi-v
+          collect NickMarcha/deskflow headless-v
+          ls -la site/pool/main
+
+      - name: Index
+        run: |
+          set -euo pipefail
+          cd site
+          for arch in arm64; do
+            dir="dists/$SUITE/main/binary-$arch"
+            mkdir -p "$dir"
+            apt-ftparchive --arch "$arch" packages pool/main > "$dir/Packages"
+            gzip -9 -k -f "$dir/Packages"
+          done
+          apt-ftparchive \
+            -o "APT::FTPArchive::Release::Origin=NickMarcha" \
+            -o "APT::FTPArchive::Release::Label=Bragi" \
+            -o "APT::FTPArchive::Release::Suite=$SUITE" \
+            -o "APT::FTPArchive::Release::Codename=$SUITE" \
+            -o "APT::FTPArchive::Release::Architectures=arm64" \
+            -o "APT::FTPArchive::Release::Components=main" \
+            -o "APT::FTPArchive::Release::Description=Bragi and the headless Deskflow server" \
+            release "dists/$SUITE" > "dists/$SUITE/Release"
+
+      - name: Sign
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          export GNUPGHOME="$(mktemp -d)"
+          printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --quiet --import
+          cd "site/dists/$SUITE"
+          gpg --batch --yes --armor --detach-sign --output Release.gpg Release
+          gpg --batch --yes --clearsign --output InRelease Release
+          rm -rf "$GNUPGHOME"
+
+      - name: Keys and pages
+        run: |
+          set -euo pipefail
+          cp keys/bragi-archive-keyring.asc site/
+          gpg --dearmor < keys/bragi-archive-keyring.asc > site/bragi-archive-keyring.gpg
+          cp install.sh index.html site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

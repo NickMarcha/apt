@@ -62,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           cd site
-          for arch in arm64; do
+          for arch in arm64 amd64; do
             dir="dists/$SUITE/main/binary-$arch"
             mkdir -p "$dir"
             apt-ftparchive --arch "$arch" packages pool/main > "$dir/Packages"
@@ -73,7 +73,7 @@ jobs:
             -o "APT::FTPArchive::Release::Label=Bragi" \
             -o "APT::FTPArchive::Release::Suite=$SUITE" \
             -o "APT::FTPArchive::Release::Codename=$SUITE" \
-            -o "APT::FTPArchive::Release::Architectures=arm64" \
+            -o "APT::FTPArchive::Release::Architectures=arm64 amd64" \
             -o "APT::FTPArchive::Release::Components=main" \
             -o "APT::FTPArchive::Release::Description=Bragi and the headless Deskflow server" \
             release "dists/$SUITE" > "dists/$SUITE/Release"

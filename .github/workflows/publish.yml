@@ -42,8 +42,8 @@ jobs:
           mkdir -p site/pool/main
           collect() {  # repo, tag prefix
             gh release list -R "$1" --limit 50 --json tagName,isDraft,isPrerelease \
-              --jq ".[] | select(.isDraft == false and .isPrerelease == false and (.tagName | startswith(\"$2\"))) | .tagName" \
-              | head -n "$KEEP" | while read -r tag; do
+              --jq "[.[] | select(.isDraft == false and .isPrerelease == false and (.tagName | startswith(\"$2\")))][:$KEEP][] | .tagName" \
+              | while read -r tag; do
                 gh release download "$tag" -R "$1" -p '*.deb' -D site/pool/main --skip-existing
               done
           }

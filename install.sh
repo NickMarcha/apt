@@ -1,5 +1,5 @@
 #!/bin/sh
-# Adds the Bragi apt repository to a Raspberry Pi OS / Debian trixie box,
+# Adds the Bragi apt repository to a Debian trixie box (Raspberry Pi OS on arm64, or amd64),
 # then installs Bragi (and the headless Deskflow server it recommends).
 #
 #   curl -fsSL https://nickmarcha.github.io/apt/install.sh | sh

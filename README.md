@@ -2,7 +2,7 @@
 
 The apt repository for [Bragi](https://github.com/NickMarcha/bragi) and the
 [headless Deskflow server](https://github.com/NickMarcha/deskflow/tree/headless),
-for Raspberry Pi OS / Debian trixie (arm64). Served at
+for Debian trixie on arm64 (Raspberry Pi OS) and amd64. Served at
 <https://nickmarcha.github.io/apt/>, which has the install instructions.
 
 ## How it's built
